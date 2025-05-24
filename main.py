@@ -2,13 +2,21 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional
-import yt_dlp  # ✅ Usando yt-dlp (ok)
+import yt_dlp
 import requests
 import os
 
 app = FastAPI()
 
-# ✅ Definição do corpo da requisição
+# ✅ Configuração do CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Você pode limitar isso depois ex: ["http://localhost:3000"]
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 class VideoRequest(BaseModel):
     name: str
     email: str
@@ -17,12 +25,10 @@ class VideoRequest(BaseModel):
     tipo_video: str
     observacao: Optional[str] = None
 
-# ✅ Função para baixar vídeo
 def baixar_video(link: str, destino: str = "videos") -> str:
     os.makedirs(destino, exist_ok=True)
 
     try:
-        # 🔎 Verifica se é de alguma plataforma suportada por yt-dlp
         if any(site in link for site in ["youtube.com", "youtu.be", "vimeo.com", "tiktok.com"]):
             ydl_opts = {
                 'outtmpl': os.path.join(destino, '%(title)s.%(ext)s'),
@@ -45,7 +51,6 @@ def baixar_video(link: str, destino: str = "videos") -> str:
                 file_path = ydl.prepare_filename(info)
                 return file_path.replace(".webm", ".mp4").replace(".mkv", ".mp4")
 
-        # 🔄 Alternativa: link direto para .mp4 ou .mov
         elif link.endswith((".mp4", ".mov")):
             nome_arquivo = os.path.join(destino, os.path.basename(link))
             with requests.get(link, stream=True) as r:
@@ -59,10 +64,8 @@ def baixar_video(link: str, destino: str = "videos") -> str:
             raise ValueError("Tipo de link não suportado ou vídeo não está disponível publicamente.")
 
     except Exception as e:
-        # 🔥 Retorna erro compreensível para o frontend
         raise RuntimeError(f"Erro ao tentar baixar o vídeo: {str(e)}")
 
-# ✅ Rota principal
 @app.post("/process-video")
 async def process_video(data: VideoRequest):
     print("✅ Dados recebidos:")
@@ -79,5 +82,6 @@ async def process_video(data: VideoRequest):
         "status": "ok",
         "mensagem": "Vídeo baixado com sucesso",
         "caminho": caminho_video
+    }
     }
     return {"status": "ok", "mensagem": "Vídeo baixado com sucesso", "caminho": caminho_video}
