@@ -83,5 +83,3 @@ async def process_video(data: VideoRequest):
         "mensagem": "Vídeo baixado com sucesso",
         "caminho": caminho_video
     }
-    }
-    return {"status": "ok", "mensagem": "Vídeo baixado com sucesso", "caminho": caminho_video}
