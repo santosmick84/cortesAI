@@ -19,13 +19,15 @@ class VideoRequest(BaseModel):
 def baixar_video(link: str, destino: str = "videos") -> str:
     os.makedirs(destino, exist_ok=True)
 
-    # Caso o link seja de YouTube ou outra plataforma suportada
-    if "youtube.com" in link or "youtu.be" in link or "vimeo.com" in link or "tiktok.com" in link:
+    # Links de plataformas como YouTube, TikTok, Vimeo, etc.
+    if any(site in link for site in ["youtube.com", "youtu.be", "vimeo.com", "tiktok.com"]):
         ydl_opts = {
             'outtmpl': os.path.join(destino, '%(title)s.%(ext)s'),
             'format': 'bestvideo+bestaudio/best',
             'merge_output_format': 'mp4',
+            'noplaylist': True,
             'quiet': True,
+            'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'
         }
 
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -33,7 +35,7 @@ def baixar_video(link: str, destino: str = "videos") -> str:
             file_path = ydl.prepare_filename(info)
             return file_path.replace(".webm", ".mp4").replace(".mkv", ".mp4")
 
-    # Caso seja link direto para .mp4 ou .mov
+    # Links diretos (.mp4, .mov, etc.)
     elif link.endswith((".mp4", ".mov")):
         nome_arquivo = os.path.join(destino, os.path.basename(link))
         with requests.get(link, stream=True) as r:
@@ -44,7 +46,7 @@ def baixar_video(link: str, destino: str = "videos") -> str:
         return nome_arquivo
 
     else:
-        raise ValueError("Tipo de link não suportado ou não é público.")
+        raise ValueError("Tipo de link não suportado ou vídeo não está disponível publicamente.")
 @app.post("/process-video")
 async def process_video(data: VideoRequest):
     print("✅ Dados recebidos:")
