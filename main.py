@@ -8,10 +8,10 @@ import os
 
 app = FastAPI()
 
-# ✅ Configuração do CORS
+# Configuração do CORS (permite chamadas externas, como do frontend)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Você pode limitar isso depois ex: ["http://localhost:3000"]
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -31,11 +31,12 @@ def baixar_video(link: str, destino: str = "videos") -> str:
     try:
         if any(site in link for site in ["youtube.com", "youtu.be", "vimeo.com", "tiktok.com"]):
             ydl_opts = {
+                'proxy': 'http://brd-customer-hl_cf51859a-zone-scraping_browser1:4o7qhh7u0lj2@brd.superproxy.io:33335',
                 'outtmpl': os.path.join(destino, '%(title)s.%(ext)s'),
                 'format': 'bestvideo+bestaudio/best',
                 'merge_output_format': 'mp4',
                 'noplaylist': True,
-                'quiet': True,
+                'quiet': False,
                 'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
                 'http_headers': {
                     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
